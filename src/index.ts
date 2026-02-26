@@ -34,12 +34,18 @@ app.post('/api/entry', async (req, res) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, description, calories: Number(calories), date }),
+      redirect: 'follow',
     })
 
-    const result = await response.json()
-    res.json({ success: true, result })
+    const text = await response.text()
+    try {
+      const result = JSON.parse(text)
+      res.json({ success: true, result })
+    } catch {
+      res.json({ success: true, raw: text })
+    }
   } catch (err) {
-    res.status(500).json({ error: 'Failed to write to Google Sheet' })
+    res.status(500).json({ error: 'Failed to write to Google Sheet', detail: String(err) })
   }
 })
 
