@@ -10,42 +10,35 @@ app.use(express.json())
 
 const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL
 
-// POST entry to Google Sheet
-app.post('/api/entry', async (req, res) => {
+// GET entry to Google Sheet
+app.get('/api/entry', async (req, res) => {
   if (!GOOGLE_SCRIPT_URL) {
     res.status(500).json({ error: 'GOOGLE_SCRIPT_URL not configured' })
     return
   }
 
-  const { type, description, calories, date } = req.body
+  const { type, description, calories, date } = req.query
 
-  if (!type || !description || calories == null || !date) {
+  if (!type || !description || !calories || !date) {
     res.status(400).json({ error: 'Missing fields: type, description, calories, date' })
     return
   }
 
-  if (!['Jedzenie', 'Aktywność'].includes(type)) {
+  if (!['Jedzenie', 'Aktywność'].includes(type as string)) {
     res.status(400).json({ error: 'type must be "Jedzenie" or "Aktywność"' })
     return
   }
 
   try {
-    // Apps Script returns 302 redirect — follow it manually as GET to get the JSON response
-    const postResponse = await fetch(GOOGLE_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, description, calories: Number(calories), date }),
-      redirect: 'manual',
-    })
+    const url = new URL(GOOGLE_SCRIPT_URL)
+    url.searchParams.set('type', type as string)
+    url.searchParams.set('description', description as string)
+    url.searchParams.set('calories', String(Number(calories)))
+    url.searchParams.set('date', date as string)
+    url.searchParams.set('buster', 'ja-pierdole-kocham-paczki-69-!-123')
 
-    let text: string
-    if (postResponse.status === 302) {
-      const redirectUrl = postResponse.headers.get('location')!
-      const redirectResponse = await fetch(redirectUrl)
-      text = await redirectResponse.text()
-    } else {
-      text = await postResponse.text()
-    }
+    const response = await fetch(url.toString(), { redirect: 'follow' })
+    const text = await response.text()
 
     try {
       const result = JSON.parse(text)
