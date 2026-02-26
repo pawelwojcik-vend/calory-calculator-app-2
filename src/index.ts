@@ -24,10 +24,10 @@ app.get('/api/entry', async (req, res) => {
     return
   }
 
-  if (!['Jedzenie', 'Aktywność'].includes(type as string)) {
-    res.status(400).json({ error: 'type must be "Jedzenie" or "Aktywność"' })
-    return
-  }
+  // if (!['Jedzenie', 'Aktywność'].includes(type as string)) {
+  //   res.status(400).json({ error: 'type must be "Jedzenie" or "Aktywność"' })
+  //   return
+  // }
 
   try {
     const url = new URL(GOOGLE_SCRIPT_URL)
