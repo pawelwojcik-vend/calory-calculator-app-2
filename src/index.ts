@@ -30,14 +30,23 @@ app.post('/api/entry', async (req, res) => {
   }
 
   try {
-    const response = await fetch(GOOGLE_SCRIPT_URL, {
+    // Apps Script returns 302 redirect — follow it manually as GET to get the JSON response
+    const postResponse = await fetch(GOOGLE_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ type, description, calories: Number(calories), date }),
-      redirect: 'follow',
+      redirect: 'manual',
     })
 
-    const text = await response.text()
+    let text: string
+    if (postResponse.status === 302) {
+      const redirectUrl = postResponse.headers.get('location')!
+      const redirectResponse = await fetch(redirectUrl)
+      text = await redirectResponse.text()
+    } else {
+      text = await postResponse.text()
+    }
+
     try {
       const result = JSON.parse(text)
       res.json({ success: true, result })
